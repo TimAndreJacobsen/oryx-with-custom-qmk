@@ -10,9 +10,10 @@
 static uint16_t led_blink_timer = 0;
 static bool leds_on = false;
 
-// SOCD Cleaner configuration
+// SOCD Cleaner configuration - this must be outside any function
 socd_cleaner_t socd_opposing_pairs[] = {
-  {{KC_S, KC_F}, SOCD_CLEANER_LAST},
+    {{KC_S, KC_F}, SOCD_CLEANER_LAST},
+    {{KC_A, KC_D}, SOCD_CLEANER_LAST},
 };
 
 
@@ -70,20 +71,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 // ------------------------ Process Record ------------------------
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     // --- Ctrl + Caps = toggle Snap Tap ---
-    // Check if any Ctrl key is currently held down
     if (keycode == KC_CAPS && record->event.pressed) {
-        // Check if Ctrl is currently pressed by reading the modifier state
         if (get_mods() & MOD_MASK_CTRL) {
             socd_cleaner_enabled = !socd_cleaner_enabled;
             led_blink_timer = timer_read();
 
-            // Turn off LEDs if Snap Tap disabled
             if (!socd_cleaner_enabled) {
                 ergodox_right_led_1_off();
                 ergodox_right_led_2_off();
                 ergodox_right_led_3_off();
             }
-            return false; // block normal Caps behavior
+            return false;
         }
     }
 
@@ -96,7 +94,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
     }
 
-    return true; // default behavior
+    return true;
 }
 
 // ------------------------ LED Blink for Snap Tap ------------------------

@@ -55,7 +55,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                                                                     KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT, KC_TRANSPARENT
   ),
   [3] = LAYOUT_ergodox_pretty(
-    DM_REC1,        KC_F1,          KC_F2,          KC_F3,          KC_F4,          KC_F5,          KC_F6,                                          KC_F7,          KC_F8,          KC_F9,          KC_F10,         KC_F11,         KC_F12,         ST_MACRO_0,
+    DM_REC1,        KC_F1,          KC_F2,          KC_F3,          KC_F4,          KC_F5,          KC_F6,                                          KC_F7,          KC_F8,          KC_F9,          KC_F10,         KC_F11,         KC_F12,         USER00,
     DM_RSTP,        KC_HASH,        NO_AT,          RALT(KC_4),     LSFT(KC_EQUAL), LSFT(KC_BSLS),  NO_CIRC,                                        KC_TRANSPARENT, NO_SLSH,        NO_LBRC,        NO_RBRC,        NO_TILD,        NO_PLUS,        KC_TRANSPARENT,
     DM_PLY1,        NO_AMPR,        NO_SLSH,        KC_EQUAL,       LSFT(KC_2),     NO_QUES,                                                                        KC_PERC,        NO_LPRN,        NO_RPRN,        NO_QUES,        NO_EQL,         KC_TRANSPARENT,
     KC_TRANSPARENT, KC_GRAVE,       NO_LESS,        NO_GRTR,        KC_BSLS,        KC_EXLM,        RALT(KC_5),                                     KC_TRANSPARENT, LSFT(KC_BSLS),  RALT(KC_7),     RALT(KC_0),     KC_EXLM,        NO_UNDS,        KC_TRANSPARENT,

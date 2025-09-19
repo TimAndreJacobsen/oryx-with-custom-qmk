@@ -19,7 +19,7 @@ socd_cleaner_t socd_opposing_pairs[] = {
 
 enum custom_keycodes {
   RGB_SLD = ZSA_SAFE_RANGE,
-  ST_MACRO_0,
+  USER00,
 };
 
 
@@ -87,7 +87,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
     // --- Custom macro ---
     switch (keycode) {
-        case ST_MACRO_0:
+        case USER00:
             if (record->event.pressed) {
                 SEND_STRING(SS_LALT(SS_TAP(X_F4)));
             }

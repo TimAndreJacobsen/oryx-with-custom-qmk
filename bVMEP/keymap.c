@@ -2,8 +2,18 @@
 #include "version.h"
 #include "i18n.h"
 
+#ifndef ZSA_SAFE_RANGE
+#define ZSA_SAFE_RANGE SAFE_RANGE
+#endif
+
+// --- Snap Tap (SOCD) toggle state ---
+static bool snap_tap_enabled = false;
+static uint16_t led_blink_timer = 0;
+static bool leds_on = false;
+
+
 enum custom_keycodes {
-  RGB_SLD = EZ_SAFE_RANGE,
+  RGB_SLD = ZSA_SAFE_RANGE,
   ST_MACRO_0,
 };
 
@@ -53,57 +63,109 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 
-
+// ------------------------ Process Record ------------------------
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
-    case ST_MACRO_0:
-    if (record->event.pressed) {
-      SEND_STRING(SS_LALT(SS_TAP(X_F4)));
-    }
-    break;
+    static bool ctrl_held = false;      // Track if Ctrl is held
+    static bool s_held = false;         // Track if S is held
+    static bool f_held = false;         // Track if F is held
 
-  }
-  return true;
+    // --- Ctrl + Caps = toggle Snap Tap ---
+    if (keycode == KC_LCTL || keycode == KC_RCTL) {
+        ctrl_held = record->event.pressed;
+    }
+
+    if (keycode == KC_CAPS && record->event.pressed && ctrl_held) {
+        snap_tap_enabled = !snap_tap_enabled;
+        led_blink_timer = timer_read();
+
+        // Turn off LEDs if Snap Tap disabled
+        if (!snap_tap_enabled) {
+            ergodox_right_led_1_off();
+            ergodox_right_led_2_off();
+            ergodox_right_led_3_off();
+        }
+        return false; // block normal Caps behavior
+    }
+
+    // --- SOCD cleaning for ESDF: S/F keys ---
+    if (snap_tap_enabled && (keycode == KC_S || keycode == KC_F)) {
+        bool is_s = (keycode == KC_S);
+        bool pressed = record->event.pressed;
+
+        // Update held state
+        if (is_s) s_held = pressed;
+        else      f_held = pressed;
+
+        // If both are held, only the last pressed remains active
+        if (s_held && f_held) {
+            if (pressed) {
+                if (is_s) { unregister_code(KC_F); register_code(KC_S); }
+                else      { unregister_code(KC_S); register_code(KC_F); }
+            } else {
+                // On release, re-register the other key if still held
+                if (is_s && f_held) { unregister_code(KC_S); register_code(KC_F); }
+                else if (!is_s && s_held) { unregister_code(KC_F); register_code(KC_S); }
+            }
+            return false; // handled
+        }
+    }
+
+    // --- Custom macro ---
+    switch (keycode) {
+        case ST_MACRO_0:
+            if (record->event.pressed) {
+                SEND_STRING(SS_LALT(SS_TAP(X_F4)));
+            }
+            return false;
+    }
+
+    return true; // default behavior
 }
 
+// ------------------------ LED Blink for Snap Tap ------------------------
+void matrix_scan_user(void) {
+    if (!snap_tap_enabled) return;
+
+    // Toggle LEDs every 300 ms
+    if (timer_elapsed(led_blink_timer) > 300) {
+        leds_on = !leds_on;
+        led_blink_timer = timer_read();
+
+        if (leds_on) {
+            ergodox_right_led_1_on();
+            ergodox_right_led_2_on();
+            ergodox_right_led_3_on();
+        } else {
+            ergodox_right_led_1_off();
+            ergodox_right_led_2_off();
+            ergodox_right_led_3_off();
+        }
+    }
+}
+
+// ------------------------ Layer LED Handling ------------------------
 uint8_t layer_state_set_user(uint8_t state) {
+    if (snap_tap_enabled) {
+        // Do not show layer LEDs while Snap Tap active
+        return state;
+    }
+
     uint8_t layer = biton(state);
-  ergodox_board_led_off();
-  ergodox_right_led_1_off();
-  ergodox_right_led_2_off();
-  ergodox_right_led_3_off();
-  switch (layer) {
-    case 1:
-      ergodox_right_led_1_on();
-      break;
-    case 2:
-      ergodox_right_led_2_on();
-      break;
-    case 3:
-      ergodox_right_led_3_on();
-      break;
-    case 4:
-      ergodox_right_led_1_on();
-      ergodox_right_led_2_on();
-      break;
-    case 5:
-      ergodox_right_led_1_on();
-      ergodox_right_led_3_on();
-      break;
-    case 6:
-      ergodox_right_led_2_on();
-      ergodox_right_led_3_on();
-      break;
-    case 7:
-      ergodox_right_led_1_on();
-      ergodox_right_led_2_on();
-      ergodox_right_led_3_on();
-      break;
-    default:
-      break;
-  }
-  return state;
-};
+    ergodox_board_led_off();
+    ergodox_right_led_1_off();
+    ergodox_right_led_2_off();
+    ergodox_right_led_3_off();
 
+    switch (layer) {
+        case 1: ergodox_right_led_1_on(); break;
+        case 2: ergodox_right_led_2_on(); break;
+        case 3: ergodox_right_led_3_on(); break;
+        case 4: ergodox_right_led_1_on(); ergodox_right_led_2_on(); break;
+        case 5: ergodox_right_led_1_on(); ergodox_right_led_3_on(); break;
+        case 6: ergodox_right_led_2_on(); ergodox_right_led_3_on(); break;
+        case 7: ergodox_right_led_1_on(); ergodox_right_led_2_on(); ergodox_right_led_3_on(); break;
+        default: break;
+    }
 
-
+    return state;
+}
